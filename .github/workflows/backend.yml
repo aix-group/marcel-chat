@@ -1,0 +1,141 @@
+name: backend
+
+on:
+  pull_request:
+    branches:
+      - '*'
+  push:
+    branches:
+      - main
+
+# Cancel a currently running workflow from the same PR, branch or tag when a new workflow is triggered
+# https://stackoverflow.com/a/72408109
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Tell pdm to use global venv location so that pdm-project/setup-pdm picks it up for caching
+  PDM_VENV_IN_PROJECT: False
+
+jobs:
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: ./backend
+    # Skip workflow on branch main if commit message starts with chore and is either pushed by renovate[bot]
+    # or contains Co-authored-by: renovate[bot].
+    if: >
+      !(startsWith(github.event.head_commit.message, 'chore') &&
+        (github.event.pusher.name == 'renovate[bot]' || contains(github.event.head_commit.message, 'Co-authored-by: renovate[bot]')) &&
+        github.ref == 'refs/heads/main')
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@48d8f15b2aaa3d255ca5af3eba4870f807ce6b3c # v45
+        with:
+          files: |
+            .github/workflows/**
+            backend/**
+
+      - name: Determine if job should run
+        id: should-run
+        run: |
+          if [[ "${{ steps.changed-files.outputs.any_changed }}" == "true" || "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "should_run=true" >> $GITHUB_ENV
+          else
+            echo "should_run=false" >> $GITHUB_ENV
+          fi
+
+      - uses: pdm-project/setup-pdm@94a823180e06fcde4ad29308721954a521c96ed0 # v4
+        if: env.should_run == 'true'
+        with:
+          python-version: 3.12.*
+
+      - name: Install dependencies (development only)
+        if: env.should_run == 'true'
+        run: |
+          pdm install -d --without default
+
+      - name: Check format
+        if: env.should_run == 'true'
+        run: pdm run ruff format --diff
+
+      - name: Check imports
+        if: env.should_run == 'true'
+        run: pdm run ruff check --select I
+
+      - name: Run lint
+        if: env.should_run == 'true'
+        run: pdm run ruff check
+
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: ./backend
+    env:
+      DATA_ROOT: ''
+      DATA_PATH: ''
+      FAQ_PATH: ''
+      SECRET_KEY: notsecure
+      ACCESS_TOKEN_EXPIRE_MINUTES: 60
+      MODEL_NAME: meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo
+      LLM_BASE_URL: https://api.together.xyz/v1/
+      LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+      DATABASE_URI: mysql://marcel:marcel@localhost:3306/marcel
+      MARIADB_DATABASE: marcel
+      MARIADB_USER: marcel
+      MARIADB_PASSWORD: marcel
+      MARIADB_ROOT_PASSWORD: marcel
+
+    # Skip workflow on branch main if commit message starts with chore and is either pushed by renovate[bot]
+    # or contains Co-authored-by: renovate[bot].
+    if: >
+      !(startsWith(github.event.head_commit.message, 'chore') &&
+        (github.event.pusher.name == 'renovate[bot]' || contains(github.event.head_commit.message, 'Co-authored-by: renovate[bot]')) &&
+        github.ref == 'refs/heads/main')
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@48d8f15b2aaa3d255ca5af3eba4870f807ce6b3c # v45
+        with:
+          files: |
+            .github/workflows/**
+            backend/**
+
+      - name: Determine if job should run
+        id: should-run
+        run: |
+          if [[ "${{ steps.changed-files.outputs.any_changed }}" == "true" || "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "should_run=true" >> $GITHUB_ENV
+          else
+            echo "should_run=false" >> $GITHUB_ENV
+          fi
+
+
+      - uses: pdm-project/setup-pdm@94a823180e06fcde4ad29308721954a521c96ed0 # v4
+        if: env.should_run == 'true'
+        with:
+          python-version: 3.12.*
+
+      - name: Start database
+        working-directory: ${{ github.workspace }}
+        run: docker compose -f docker-compose.yaml -f docker-compose.ci.yaml up database --wait
+
+      - name: Install dependencies
+        if: env.should_run == 'true'
+        run: pdm install
+
+      - name: Run test
+        if: env.should_run == 'true'
+        run: pdm run test

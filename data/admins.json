@@ -1,0 +1,6 @@
+[
+    {
+        "username": "admin",
+        "hashed_password": "$argon2id$v=19$m=65536,t=3,p=4$FRnc99KQkJkRK+1RkTueyg$WbJ64c5iyXgHDy3nJyGqpEAyc1VsM8Q63ocF4XMRTF8"
+    }
+]

@@ -1,0 +1,36 @@
+[project]
+name = "scraper"
+version = "0.1.0"
+description = "Default template for PDM package"
+authors = [
+    {name = "Jan Trienes", email = "jan.trienes@uni-marburg.de"},
+]
+dependencies = [
+    "scrapy==2.13.2",
+    "beautifulsoup4==4.13.4",
+    "html2text==2025.4.15",
+]
+requires-python = "==3.13.*"
+readme = "README.md"
+license = {text = "MIT"}
+
+[tool.ruff.format]
+exclude = ["*.ipynb"]
+
+[tool.pdm]
+# This is set to true so that package becomes importable
+distribution = true
+
+[dependency-groups]
+dev = [
+    "ruff==0.12.1",
+    "pytest==8.4.1",
+]
+
+[tool.pdm.scripts]
+format-code = "ruff format"
+format-imports = "ruff check --select I --fix"
+format = {composite = ["format-imports", "format-code"]}
+lint = "ruff check"
+lint-fix = "ruff check --fix"
+test = "pytest"

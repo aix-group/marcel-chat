@@ -1,0 +1,92 @@
+# To use:
+#
+#     pre-commit run -a
+#
+# Or:
+#
+#     pre-commit install  # (runs every time you commit in git)
+#
+# To update this file:
+#
+#     pre-commit autoupdate
+#
+# See https://github.com/pre-commit/pre-commit
+
+fail_fast: false
+
+repos:
+# Standard hooks
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v4.6.0
+  hooks:
+  - id: check-added-large-files
+  - id: check-case-conflict
+  - id: check-docstring-first
+  - id: check-merge-conflict
+  - id: check-symlinks
+  - id: check-toml
+  - id: check-json
+  - id: debug-statements
+  - id: mixed-line-ending
+  - id: requirements-txt-fixer
+  - id: trailing-whitespace
+  - id: end-of-file-fixer
+
+
+- repo: local
+  hooks:
+    - id: format-backend
+      name: Format Code and Imports Backend
+      entry: bash -c 'cd backend && pdm run format'
+      language: system
+      types: [python]
+      files: ^backend/
+
+    - id: lint-fix-backend
+      name: Lint Fix Backend
+      entry: bash -c 'cd backend && pdm run lint-fix'
+      language: system
+      types: [python]
+      files: ^backend/
+
+    - id: format-evaluation
+      name: Format Code and Imports Evaluation
+      entry: bash -c 'cd evaluation && pdm run format'
+      language: system
+      types: [python]
+      files: ^evaluation/
+
+    - id: lint-fix-evaluation
+      name: Lint Fix Evaluation
+      entry: bash -c 'cd evaluation && pdm run lint-fix'
+      language: system
+      types: [python]
+      files: ^evaluation/
+
+    - id: format-scraper
+      name: Format Code and Imports Scraper
+      entry: bash -c 'cd scraper && pdm run format'
+      language: system
+      types: [python]
+      files: ^scraper/
+
+    - id: lint-fix-scraper
+      name: Lint Fix Scraper
+      entry: bash -c 'cd scraper && pdm run lint-fix'
+      language: system
+      types: [python]
+      files: ^scraper/
+
+    - id: format-frontend
+      name: Format Code and Imports Frontend
+      entry: bash -c 'cd frontend && npm run format'
+      language: system
+      types_or: [javascript, jsx, ts, tsx, css, vue]
+      files: ^frontend/
+
+    - id: lint-frontend
+      name: Lint Frontend
+      entry: bash -c 'cd frontend && npm run lint'
+      language: system
+      types_or: [javascript, jsx, ts, tsx, css, vue]
+      files: ^frontend/

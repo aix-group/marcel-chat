@@ -1,0 +1,90 @@
+services:
+  database:
+    image: mariadb:lts@sha256:1e669024fc94f626b9dc48bf47b29b5339cec203c28e61a3dc372991a345daf5
+    restart: always
+    environment:
+      MARIADB_DATABASE: ${MARIADB_DATABASE}
+      MARIADB_USER: ${MARIADB_USER}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+    volumes:
+      - database_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: backend/
+      dockerfile: Dockerfile
+      additional_contexts:
+        - data=data/
+    restart: always
+    depends_on:
+      database:
+        condition: service_healthy
+        restart: true
+    environment:
+      UVICORN_WORKERS: 4
+      UVICORN_PORT: 9000
+      UVICORN_ROOT_PATH: /api
+      DATA_ROOT: ${DATA_ROOT}
+      DATA_PATH: ${DATA_PATH}
+      FAQ_PATH: ${FAQ_PATH}
+      ADMINS_PATH: ${ADMINS_PATH}
+      SECRET_KEY: ${SECRET_KEY}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES}
+      LLM_BASE_URL: ${LLM_BASE_URL}
+      LLM_API_KEY: ${LLM_API_KEY}
+      MODEL_NAME: ${MODEL_NAME}
+      DATABASE_URI: mysql://${MARIADB_USER}:${MARIADB_PASSWORD}@database:3306/${MARIADB_DATABASE}
+      HAYSTACK_TELEMETRY_ENABLED: false
+    ports:
+      - "127.0.0.1:9000:9000"
+    healthcheck:
+      test: curl --fail http://127.0.0.1:9000/status || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+
+  frontend:
+    build:
+      dockerfile: Dockerfile
+      context: frontend/
+    restart: always
+    ports:
+      - "127.0.0.1:9001:8080"
+    healthcheck:
+      test: curl --fail http://127.0.0.1:8080 || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+
+  nginx:
+    restart: always
+    image: nginxinc/nginx-unprivileged:mainline-alpine@sha256:65e3e85dbaed8ba248841d9d58a899b6197106c23cb0ff1a132b7bfe0547e4c0
+    ports:
+      - 8080:8080
+    volumes:
+      - ./deployment/nginx-docker.conf:/etc/nginx/conf.d/default.conf
+      - ./certs:/etc/nginx/certs
+    depends_on:
+      - frontend
+      - backend
+
+volumes:
+  database_data:

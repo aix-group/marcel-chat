@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="13.130864mm"
+   height="13.128907mm"
+   viewBox="0 0 13.130864 13.128907"
+   version="1.1"
+   id="svg1"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs1" />
+  <g
+     id="layer1"
+     transform="translate(-54.894529,-34.488282)">
+    <g
+       id="path6-1-2-8">
+      <path
+         style="fill:#ffffff;stroke-linecap:round;stroke-linejoin:bevel;paint-order:fill markers stroke"
+         d="m 67.52456,41.052677 a 6.064527,6.064527 0 0 1 -6.064527,6.064527 6.064527,6.064527 0 0 1 -6.064527,-6.064527 6.064527,6.064527 0 0 1 6.064527,-6.064527 6.064527,6.064527 0 0 1 6.064527,6.064527 z"
+         id="path3" />
+      <path
+         style="fill:#1e2939;stroke-linecap:round;stroke-linejoin:bevel;paint-order:fill markers stroke"
+         d="m 61.460937,34.488281 c -3.619565,0 -6.566406,2.944888 -6.566406,6.564453 0,3.619566 2.946841,6.564454 6.566406,6.564453 3.619566,0 6.564454,-2.944887 6.564454,-6.564453 0,-3.619565 -2.944888,-6.564453 -6.564454,-6.564453 z m 0,1 c 3.079126,0 5.564454,2.485328 5.564454,5.564453 0,3.079126 -2.485328,5.564453 -5.564454,5.564453 -3.079125,0 -5.566406,-2.485327 -5.566406,-5.564453 0,-3.079125 2.487281,-5.564453 5.566406,-5.564453 z"
+         id="path4" />
+    </g>
+    <path
+       d="M 60.973975,44.004002 59.314508,39.051 h -0.03387 q 0.0085,0.169333 0.0254,0.4826 0.01693,0.3048 0.0254,0.668867 0.01693,0.3556 0.01693,0.668867 v 3.132668 h -0.973667 v -6.045203 h 1.507068 l 1.591734,4.749802 h 0.03387 l 1.659468,-4.749802 h 1.507067 v 6.045203 h -1.032934 v -3.183468 q 0,-0.287867 0.0085,-0.626534 0.01693,-0.347133 0.0254,-0.651933 0.01693,-0.313267 0.0254,-0.482601 h -0.03387 l -1.727201,4.944536 z"
+       id="text3-1-1-1"
+       style="-inkscape-font-specification:'Noto Sans Semi-Bold';fill:#1e2939;stroke-width:0.405694;stroke-linecap:round;stroke-linejoin:bevel;paint-order:stroke fill markers"
+       aria-label="M" />
+    <text
+       xml:space="preserve"
+       style="font-size:8.46667px;line-height:0;font-family:'Noto Sans';-inkscape-font-specification:'Noto Sans';text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#000000;stroke:none;stroke-width:0.264583"
+       x="67.585472"
+       y="40.244167"
+       id="text3-8"><tspan
+         id="tspan3-4"
+         style="stroke:none;stroke-width:0.264583"
+         x="67.585472"
+         y="40.244167"> </tspan></text>
+  </g>
+</svg>

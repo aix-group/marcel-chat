@@ -1,0 +1,142 @@
+name: scraper
+on:
+  pull_request:
+    branches:
+      - '*'
+  push:
+    branches:
+      - main
+
+
+# Cancel a currently running workflow from the same PR, branch or tag when a new workflow is triggered
+# https://stackoverflow.com/a/72408109
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Tell pdm to use global venv location so that pdm-project/setup-pdm picks it up for caching
+  PDM_VENV_IN_PROJECT: False
+
+jobs:
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: ./scraper
+    # Skip workflow on branch main if commit message starts with chore and is either pushed by renovate[bot]
+    # or contains Co-authored-by: renovate[bot].
+    if: >
+      !(startsWith(github.event.head_commit.message, 'chore') &&
+        (github.event.pusher.name == 'renovate[bot]' || contains(github.event.head_commit.message, 'Co-authored-by: renovate[bot]')) &&
+        github.ref == 'refs/heads/main')
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+
+      - name: Echo variables
+        env:
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          PUSHER_NAME: ${{ github.event.pusher.name }}
+          GIT_REF: ${{ github.ref }}
+        run: |
+          echo "Commit Message: $COMMIT_MESSAGE"
+          echo "Pusher Name: $PUSHER_NAME"
+          echo "Git Ref: $GIT_REF"
+          # Test the condition for debugging
+          if [ "${COMMIT_MESSAGE#chore}" != "$COMMIT_MESSAGE" ] && \
+             [ "$PUSHER_NAME" == "renovate[bot]" ] && \
+             [ "$GIT_REF" == "refs/heads/main" ]; then
+            echo "Condition matched!"
+          else
+            echo "Condition not matched."
+          fi
+
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@ed68ef82c095e0d48ec87eccea555d944a631a4c # v46
+        with:
+          files: |
+            .github/workflows/**
+            scraper/**
+
+      - name: Determine if job should run
+        id: should-run
+        run: |
+          if [[ "${{ steps.changed-files.outputs.any_changed }}" == "true" || "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "should_run=true" >> $GITHUB_ENV
+          else
+            echo "should_run=false" >> $GITHUB_ENV
+          fi
+
+      - uses: pdm-project/setup-pdm@94a823180e06fcde4ad29308721954a521c96ed0 # v4
+        if: env.should_run == 'true'
+        with:
+          python-version: 3.13.*
+
+      - name: Install dependencies (development only)
+        if: env.should_run == 'true'
+        run: |
+          pdm install -d --without default
+
+      - name: Check format
+        if: env.should_run == 'true'
+        run: pdm run ruff format --diff
+
+      - name: Check imports
+        if: env.should_run == 'true'
+        run: pdm run ruff check --select I
+
+      - name: Run lint
+        if: env.should_run == 'true'
+        run: pdm run ruff check
+
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: ./scraper
+    # Skip workflow on branch main if commit message starts with chore and is either pushed by renovate[bot]
+    # or contains Co-authored-by: renovate[bot].
+    if: >
+      !(startsWith(github.event.head_commit.message, 'chore') &&
+        (github.event.pusher.name == 'renovate[bot]' || contains(github.event.head_commit.message, 'Co-authored-by: renovate[bot]')) &&
+        github.ref == 'refs/heads/main')
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@ed68ef82c095e0d48ec87eccea555d944a631a4c # v46
+        with:
+          files: |
+            .github/workflows/**
+            scraper/**
+
+      - name: Determine if job should run
+        id: should-run
+        run: |
+          if [[ "${{ steps.changed-files.outputs.any_changed }}" == "true" || "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "should_run=true" >> $GITHUB_ENV
+          else
+            echo "should_run=false" >> $GITHUB_ENV
+          fi
+
+      - uses: pdm-project/setup-pdm@94a823180e06fcde4ad29308721954a521c96ed0 # v4
+        if: env.should_run == 'true'
+        with:
+          python-version: 3.13.*
+
+      - name: Install libxml
+        run: sudo apt install -y libxml2-dev libxslt-dev
+
+      - name: Install dependencies
+        if: env.should_run == 'true'
+        run: pdm install
+
+      - name: Run test
+        if: env.should_run == 'true'
+        run: pdm run test

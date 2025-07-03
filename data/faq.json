@@ -1,0 +1,33 @@
+[
+    {
+        "id": "faq-0000",
+        "question": "Which Bachelor degree is needed to be admitted to the Masters of Data Science program?",
+        "sources": [
+            "https://www.uni-marburg.de/en/studying/after-your-first-degree/masters-programs/degree-programs/datasciencems",
+            "https://www.uni-marburg.de/en/studying/after-your-first-degree/masters-programs/application-for-a-masters-programme/eap/eap-data-science"
+        ]
+    },
+    {
+        "id": "faq-0001",
+        "question": "Does the Master Data Science have a minimum grade requirement?",
+        "sources": [
+            "https://www.uni-marburg.de/en/studying/after-your-first-degree/masters-programs/degree-programs/datasciencems",
+            "https://www.uni-marburg.de/en/studying/after-your-first-degree/masters-programs/application-for-a-masters-programme/eap/eap-data-science"
+        ]
+    },
+    {
+        "id": "faq-0002",
+        "question": "Which language proficiency is required?",
+        "sources": [
+            "https://www.uni-marburg.de/en/studying/after-your-first-degree/masters-programs/degree-programs/datasciencems",
+            "https://www.uni-marburg.de/en/studying/after-your-first-degree/masters-programs/application-for-a-masters-programme/eap/eap-data-science"
+        ]
+    },
+    {
+        "id": "faq-0003",
+        "question": "What GPA scale is used?",
+        "sources": [
+            "https://www.uni-marburg.de/en/fb12/studying/modules-and-courses/glossary"
+        ]
+    }
+]

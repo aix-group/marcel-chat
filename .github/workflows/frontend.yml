@@ -1,0 +1,146 @@
+name: frontend
+
+on:
+  pull_request:
+    branches:
+      - '*'
+  push:
+    branches:
+      - main
+
+# Cancel a currently running workflow from the same PR, branch or tag when a new workflow is triggered
+# https://stackoverflow.com/a/72408109
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: ./frontend
+    # Skip workflow on branch main if commit message starts with chore and is either pushed by renovate[bot]
+    # or contains Co-authored-by: renovate[bot].
+    if: >
+      !(startsWith(github.event.head_commit.message, 'chore') &&
+        (github.event.pusher.name == 'renovate[bot]' || contains(github.event.head_commit.message, 'Co-authored-by: renovate[bot]')) &&
+        github.ref == 'refs/heads/main')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22.x'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run linting
+        run: npm run lint
+
+      - name: Run format-check
+        run: npm run format-check
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: ./frontend
+    # Skip workflow on branch main if commit message starts with chore and is either pushed by renovate[bot]
+    # or contains Co-authored-by: renovate[bot].
+    if: >
+      !(startsWith(github.event.head_commit.message, 'chore') &&
+        (github.event.pusher.name == 'renovate[bot]' || contains(github.event.head_commit.message, 'Co-authored-by: renovate[bot]')) &&
+        github.ref == 'refs/heads/main')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22.x'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run build
+        run: npm run build
+
+  test:
+    name: Playwright Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend
+    # Skip workflow on branch main if commit message starts with chore and is either pushed by renovate[bot]
+    # or contains Co-authored-by: renovate[bot].
+    if: >
+      !(startsWith(github.event.head_commit.message, 'chore') &&
+        (github.event.pusher.name == 'renovate[bot]' || contains(github.event.head_commit.message, 'Co-authored-by: renovate[bot]')) &&
+        github.ref == 'refs/heads/main')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@48d8f15b2aaa3d255ca5af3eba4870f807ce6b3c # v45
+        with:
+          files: |
+            .github/workflows/**
+            frontend/**
+
+      - name: Determine if job should run
+        id: should-run
+        run: |
+          if [[ "${{ steps.changed-files.outputs.any_changed }}" == "true" || "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "should_run=true" >> $GITHUB_ENV
+          else
+            echo "should_run=false" >> $GITHUB_ENV
+          fi
+
+      - name: Set up Node.js
+        if: env.should_run == 'true'
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22.x'
+
+      - name: Install dependencies
+        if: env.should_run == 'true'
+        run: npm install
+
+      - name: Install Playwright Dependencies
+        if: env.should_run == 'true'
+        run: npx playwright install-deps
+
+      - name: Install Playwright Browsers
+        if: env.should_run == 'true'
+        run: npx playwright install
+
+      - name: Run Playwright Tests
+        if: env.should_run == 'true'
+        id: playwright_tests
+        env:
+          PLAYWRIGHT: true
+          PLAYWRIGHT_JSON_OUTPUT_NAME: results.json
+        run: npx playwright test --trace on --reporter=json,html
+
+      - uses: daun/playwright-report-summary@b223a65bd3965c7cced5feba27dbc0c06acc51b2 # v3
+        if: (env.should_run == 'true') && always()
+        with:
+          report-file: frontend/results.json
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: ${{ !cancelled() && steps.playwright_tests.outcome == 'failure' }}
+        with:
+          name: playwright-report
+          path: frontend/playwright-report/
+          retention-days: 30

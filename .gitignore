@@ -1,0 +1,17 @@
+certs
+wandb
+*.xlsx
+.env*
+!.env.example
+evaluate_tasks.txt
+output*/
+slurm-*.out
+output/
+__pycache__/
+*.code-workspace
+database.db
+*.egg-info
+*.venv
+*.scrapy
+*cache
+*.pdm-python

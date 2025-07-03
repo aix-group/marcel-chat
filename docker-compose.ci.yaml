@@ -1,0 +1,5 @@
+services:
+  # Expose ports for testing in backend CI
+  database:
+    ports:
+      - "3306:3306"
