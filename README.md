@@ -1,12 +1,14 @@
-# Marcel
 <p align="center">
-  <img height="150" src="./frontend/src/assets/tagline.svg">
+  <img height="150" src="docs/tagline.svg">
 </p>
+
+---
+
 Marcel is a lightweight, open-source conversational agent designed to support prospective students with admission-related inquiries. It aims to provide fast and personalized responses while reducing the workload of university support staff. The system is engineered for easy deployment in resource-constrained academic settings.
 
 **More information:** [Paper]() | [Demo video]()
 
-## Quickstart 
+## Quickstart
 
 ### Clone repository
 
@@ -74,9 +76,9 @@ Plese refer [backend instruction](./backend/README.md) for ```admins``` configur
 
 
 
-### Generate certificates 
+### Generate certificates
 ```sh
-mkdir certs 
+mkdir certs
 cd certs
 openssl req -x509 -nodes -days 365 \
   -newkey rsa:2048 \
@@ -87,17 +89,16 @@ sudo chmod +r selfsigned.crt
 sudo chmod +r selfsigned.key
 ```
 
-### Start Containers 
+### Start Containers
 ```sh
 docker compose --env-file .env up
 ```
-The app will be available at: https://localhost:8080/ 
+The app will be available at: https://localhost:8080/
 
 ## Development instructions
 Refer to the following documents:
 
-- [Backend](./backend/README.md) 
+- [Backend](./backend/README.md)
 - [Frontend](./frontend/README.md)
-- [Scraper](./scraper/README.md) 
+- [Scraper](./scraper/README.md)
 - **Docker Deployment:** [Docker](./docs/docker.md)
-
