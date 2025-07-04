@@ -1,0 +1,32 @@
+- name: Setup admin users
+  community.docker.docker_container:
+    container_default_behavior: no_defaults
+    state: started
+    name: seeder
+    image: "{{ marcel__registry_url }}/{{ marcel__repository }}/backend:{{ marcel__tag }}"
+    networks:
+      - name: marcel
+    command: python -m marcel.init_data admins
+    cap_drop:
+      - all
+    read_only: true
+    tmpfs:
+      - /tmp
+    mounts:
+      - type: bind
+        source: /home/docker/seed
+        target: /data/seed
+    env: "{{ MARCEL__BACKEND_ENV }}"
+  changed_when: false
+
+- name: get logs of seeder
+  ansible.builtin.command:
+    cmd: docker container logs seeder
+  changed_when: false
+
+- name: Delete seeder container
+  when: marcel__setup_backend_container
+  community.docker.docker_container:
+    name: seeder
+    state: absent
+  changed_when: false

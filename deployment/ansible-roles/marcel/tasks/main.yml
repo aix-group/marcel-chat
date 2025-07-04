@@ -1,0 +1,211 @@
+- name: Setup marcel containers
+  become: true
+  become_user: docker
+  become_method: su
+  block:
+
+  - name: Login to the registry
+    when: marcel__login_to_registry
+    community.docker.docker_login:
+      registry_url: "{{ marcel__registry_url }}"
+      username: "{{ marcel__registry_username }}"
+      password: "{{ marcel__registry_password }}"
+
+  - name: Create marcel network
+    community.docker.docker_network:
+      name: marcel
+      ipam_config:
+        - subnet: 172.17.2.0/24
+          gateway: 172.17.2.1
+          iprange: 172.17.2.0/24
+      state: present
+
+  - name: Run database container
+    when: marcel__setup_database_container
+    block:
+    - name: Create database volume
+      community.docker.docker_volume:
+        name: database_volume
+
+    - name: Run database container
+      when: marcel__setup_database_container
+      block:
+      - name: Start the database container
+        community.docker.docker_container:
+          container_default_behavior: no_defaults
+          name: database
+          state: healthy
+          restart_policy: always
+          healthcheck:
+            interval: 10s
+            timeout: 5s
+            retries: 5
+            test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+          pull: "{{ marcel__update_database_container }}"
+          image: mariadb:latest
+          networks:
+            - name: marcel
+          mounts:
+            - source: database_volume
+              target: /var/lib/mysql
+              type: volume
+          comparisons:
+            networks: strict
+          env: "{{ MARCEL__DATABASE_ENV }}"
+
+    - name: check if the unix_socket authentication is enabled for root@localhost
+      ansible.builtin.shell:
+        cmd: echo "select 1;" | docker exec database mariadb
+      register: mariadb_auth_test
+      changed_when: false
+      failed_when: false
+
+    - name: enable unix_socket authentication for root@localhost
+      when: mariadb_auth_test.rc != 0
+      ansible.builtin.shell:
+        cmd: echo "alter user 'root'@'localhost' identified via unix_socket or mysql_native_password using password('{{ MARCEL__MARIADB_ROOT_PASSWORD }}');" | docker exec -i database mariadb -u root -p{{ MARCEL__MARIADB_ROOT_PASSWORD }}
+
+  - name: Run backend container
+    when: marcel__setup_backend_container
+    community.docker.docker_container:
+      container_default_behavior: no_defaults
+      name: backend
+      state: healthy
+      restart_policy: always
+      healthcheck:
+        interval: 10s
+        timeout: 5s
+        retries: 5
+        test: ["CMD-SHELL", "curl --fail http://127.0.0.1:9000/status || exit 1"]
+      pull: "{{ marcel__update_backend_container }}"
+      image: "{{ marcel__registry_url }}/{{ marcel__repository }}/backend:{{ marcel__tag }}"
+      networks:
+        - name: marcel
+      comparisons:
+        networks: strict
+      cap_drop:
+        - all
+      read_only: true
+      tmpfs:
+        - /tmp
+      env: "{{ MARCEL__BACKEND_ENV }}"
+    notify: reload nginx configuration
+
+  - name: seed admin users
+    when: marcel__setup_backend_container
+    block:
+    - name: Create seed directory
+      ansible.builtin.file:
+        path: /home/docker/seed
+        state: directory
+
+    - name: Copy admin seed list
+      ansible.builtin.copy:
+        src: "{{ item }}"
+        dest: /home/docker/seed/
+      with_first_found:
+        - "admins.json.{{ ansible_hostname }}"
+        - "admins.json"
+      notify: admin list changed
+
+    - name: Update admin table if required
+      ansible.builtin.meta: flush_handlers
+
+  - name: Run frontend container
+    when: marcel__setup_frontend_container
+    community.docker.docker_container:
+      container_default_behavior: no_defaults
+      name: frontend
+      state: healthy
+      restart_policy: always
+      healthcheck:
+        interval: 10s
+        timeout: 5s
+        retries: 5
+        test: ["CMD-SHELL", "curl --fail http://127.0.0.1:8080 || exit 1"]
+      pull: "{{ marcel__update_frontend_container }}"
+      image: "{{ marcel__registry_url }}/{{ marcel__repository }}/frontend:{{ marcel__tag }}"
+      networks:
+        - name: marcel
+      comparisons:
+        networks: strict
+      cap_drop:
+        - all
+      read_only: true
+      tmpfs:
+        - /tmp
+    notify: reload nginx configuration
+
+  - name: setup nginx container
+    when: marcel__setup_nginx_container
+    block:
+    - name: Create nginx config directory
+      ansible.builtin.file:
+        path: /home/docker/nginx-config
+        state: directory
+
+    - name: Copy nginx config (part 1)
+      ansible.builtin.copy:
+        src: nginx-docker.conf
+        dest: /home/docker/nginx-config/nginx-docker.conf
+      notify: nginx config changed
+
+    - name: Copy nginx config (part 2)
+      ansible.builtin.copy:
+        src: nginx-docker-gzip.conf
+        dest: /home/docker/nginx-config/nginx-docker-gzip.conf
+      notify: nginx config changed
+
+    - name: Copy ssl certificate
+      ansible.builtin.copy:
+        src: "{{ marcel__ssl_cert_chain }}"
+        dest: /home/docker/nginx-config/certificate.cer
+      notify: nginx config changed
+
+    - name: Copy ssl private key
+      ansible.builtin.copy:
+        src: "{{ marcel__ssl_key }}"
+        dest: /home/docker/nginx-config/certificate.key
+      notify: nginx config changed
+
+    - name: Copy diffie-hellmann parameters
+      ansible.builtin.copy:
+        src: dhparam
+        dest: /home/docker/nginx-config/dhparam
+      notify: nginx config changed
+
+    - name: Check if nginx restart is required
+      ansible.builtin.meta: flush_handlers
+
+    - name: Run nginx container
+      community.docker.docker_container:
+        container_default_behavior: no_defaults
+        name: nginx
+        state: started
+        restart: "{{ marcel__nginx_container_restart }}"
+        restart_policy: always
+        pull: "{{ marcel__update_nginx_container }}"
+        image: "{{ marcel__nginx_container }}:{{ marcel__nginx_tag }}"
+        networks:
+          - name: marcel
+        comparisons:
+          networks: strict
+        ports:
+          - 80:8080
+          - 443:8443
+        mounts:
+          - type: bind
+            source: /home/docker/nginx-config/certificate.key
+            target: /etc/nginx/certs/certificate.key
+          - type: bind
+            source: /home/docker/nginx-config/certificate.cer
+            target: /etc/nginx/certs/certificate.cer
+          - type: bind
+            source: /home/docker/nginx-config/nginx-docker.conf
+            target: /etc/nginx/conf.d/default.conf
+          - type: bind
+            source: /home/docker/nginx-config/nginx-docker-gzip.conf
+            target: /etc/nginx/conf.d/gzip.conf
+          - type: bind
+            source: /home/docker/nginx-config/dhparam
+            target: /etc/nginx/dhparam

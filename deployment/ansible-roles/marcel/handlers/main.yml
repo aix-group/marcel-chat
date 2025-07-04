@@ -1,0 +1,8 @@
+- name: nginx config changed
+  ansible.builtin.set_fact: marcel__nginx_container_restart="true"
+
+- name: reload nginx configuration
+  include_tasks: tasks/reload_nginx_configuration.yaml
+
+- name: admin list changed
+  include_tasks: tasks/update_admin_list.yaml

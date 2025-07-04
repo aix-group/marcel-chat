@@ -1,0 +1,23 @@
+marcel__repository: trienes/marcel
+marcel__tag: main
+
+marcel__database_container: mariadb
+marcel__database_tag: latest
+
+marcel__nginx_container: nginxinc/nginx-unprivileged
+marcel__nginx_tag: stable-alpine
+
+marcel__login_to_registry: true
+marcel__setup_database_container: true
+marcel__setup_backend_container: true
+marcel__setup_frontend_container: true
+marcel__setup_nginx_container: true
+marcel__development_pull_containers: false
+
+marcel__update_database_container: false
+marcel__update_backend_container: false
+marcel__update_frontend_container: false
+marcel__update_nginx_container: false
+
+# helper variable for container restart
+marcel__nginx_container_restart: false

@@ -1,0 +1,9 @@
+- name: determine if the nginx container is already running
+  community.docker.docker_container_info:
+    name: nginx
+  register: nginx_info
+
+- name: reload nginx configuration
+  when: nginx_info.exists and nginx_info.container.State.Status == "running"
+  ansible.builtin.shell:
+    cmd: docker exec nginx nginx -s reload
