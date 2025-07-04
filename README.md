@@ -1,5 +1,5 @@
 <p align="center">
-  <img height="150" src="docs/tagline.svg">
+  <img height="150px" src="docs/tagline.svg">
 </p>
 
 ---
