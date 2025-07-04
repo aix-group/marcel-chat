@@ -74,9 +74,10 @@ Plese refer [backend instruction](./backend/README.md) for ```admins``` configur
 </details>
 
 
-
-
 ### Generate certificates
+
+The application supports HTTPs-encrypted traffic. For development purposes, you can generate certificates like this:
+
 ```sh
 mkdir certs
 cd certs
