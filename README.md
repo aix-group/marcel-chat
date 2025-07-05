@@ -43,7 +43,20 @@ The **knowledge base** defines the set of RAG sources used for your task. It mus
 <summary><b>Knowledge base Example</b></summary>
 
 ```json
-{"url": "https://www.uni-marburg.de/en/studying/after-your-first-degree/masters-programs/application-for-a-masters-programme/master", "content": "# Master\n\n  \n\n\n\n\n", "og": {"og:site_name": "Philipps-Universit\u00e4t Marburg", "og:title": "Master", "og:type": "website", "og:description": "", "og:url": "https://www.uni-marburg.de/en/studying/after-your-first-degree/masters-programs/application-for-a-masters-programme/master", "og:image": "https://www.uni-marburg.de/@@site-logo/favicon.ico", "og:image:type": "image/x-icon"}, "favicon": "https://www.uni-marburg.de/++theme++plonetheme.unimr/layout/favicon.ico"}
+{
+    "url": "https://www.uni-marburg.de/en/studying/after-your-first-degree/masters-programs/application-for-a-masters-programme/master",
+    "content": "# Master\n\n  \n\n\n\n\n",
+    "og": {
+        "og:site_name": "Philipps-Universit\u00e4t Marburg",
+        "og:title": "Master",
+        "og:type": "website",
+        "og:description": "",
+        "og:url": "https://www.uni-marburg.de/en/studying/after-your-first-degree/masters-programs/application-for-a-masters-programme/master",
+        "og:image": "https://www.uni-marburg.de/@@site-logo/favicon.ico",
+        "og:image:type": "image/x-icon"
+    },
+    "favicon": "https://www.uni-marburg.de/++theme++plonetheme.unimr/layout/favicon.ico"
+}
 ```
 
 </details>
