@@ -8,6 +8,8 @@ Marcel is a lightweight, open-source conversational agent designed to support pr
 
 **More information:** [Paper](https://aclanthology.org/2025.emnlp-demos.13/) | [Demo video](https://youtu.be/uLCB2R6szz4)
 
+This repository provides the application related code. For experiments related to the EMNLP paper, please refer to the [`marcel-emnlp-experiments`](https://github.com/aix-group/marcel-emnlp-experiments) repository.
+
 ## Quickstart
 
 ### Clone repository
